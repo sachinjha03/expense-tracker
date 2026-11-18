@@ -28,14 +28,30 @@ async function expenses(request, env) {
   } catch {
     return error('Invalid request.', 400);
   }
-  if (!await authorized(input?.code, env.LEDGER_ACCESS_CODE)) return error('Incorrect access code.', 401);
+  if (!input || typeof input !== 'object') return error('Invalid request.', 400);
+  if (input.action === 'owner' || input.action === 'edit') {
+    if (typeof input.password !== 'string' || !input.password || input.password.length > 256) {
+      return error('Owner password required.', 401);
+    }
+    const minute = Math.floor(Date.now() / 60000);
+    const attempt = await env.DB.prepare(
+      `INSERT INTO owner_attempts (slot, minute, count) VALUES (1, ?, 1)
+       ON CONFLICT(slot) DO UPDATE SET minute = excluded.minute,
+         count = CASE WHEN owner_attempts.minute = excluded.minute THEN owner_attempts.count + 1 ELSE 1 END
+       WHERE owner_attempts.minute != excluded.minute OR owner_attempts.count < 20
+       RETURNING count`
+    ).bind(minute).first();
+    if (!attempt) return error('Too many owner attempts. Try again in a minute.', 429);
+    if (!await authorized(input.password, env.OWNER_PASSWORD)) return error('Incorrect owner password.', 401);
+    if (input.action === 'owner') return json({ ok: true });
+  }
   if (input.action === 'list') {
     const { results } = await env.DB.prepare(
-      'SELECT title, CAST(paise AS REAL)/100 AS amount, payer, description, added_at AS addedAt FROM expenses ORDER BY rowid DESC'
+      'SELECT id, title, CAST(paise AS REAL)/100 AS amount, payer, description, added_at AS addedAt FROM expenses ORDER BY rowid DESC'
     ).all();
     return json({ ok: true, entries: results });
   }
-  if (input.action !== 'append') return error('Unsupported action.', 400);
+  if (input.action !== 'append' && input.action !== 'edit') return error('Unsupported action.', 400);
 
   const title = typeof input.title === 'string' ? input.title.trim() : '';
   const description = typeof input.description === 'string' ? input.description.trim() : '';
@@ -45,6 +61,13 @@ async function expenses(request, env) {
   if (!title || title.length > 120 || description.length > 500 || amount <= 0 ||
       !payers.includes(input.payer) || !validId) {
     return error('Enter a title, a valid rupee amount, and a payer.', 400);
+  }
+  if (input.action === 'edit') {
+    const result = await env.DB.prepare(
+      'UPDATE expenses SET title = ?, paise = ?, payer = ?, description = ? WHERE id = ?'
+    ).bind(title, amount, input.payer, description, input.id).run();
+    if (!result.meta.changes) return error('Expense not found.', 404);
+    return json({ ok: true });
   }
   await env.DB.prepare(
     'INSERT INTO expenses (id, title, paise, payer, description, added_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING'

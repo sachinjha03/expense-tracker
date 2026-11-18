@@ -6,7 +6,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 'DM Sans',s
 header{border-bottom:1px solid var(--line);background:var(--white)}
 .bar,main{width:min(1120px,calc(100% - 40px));margin:auto}
 .bar{height:70px;display:flex;align-items:center;gap:12px}
-.bar #lock{margin-left:auto}
+.bar #owner{margin-left:auto}
 .mark{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#e6eddf;color:var(--green);font-size:23px}
 main{padding:45px 0 60px}
 .intro{padding-bottom:23px}
@@ -15,7 +15,9 @@ h1{font-size:clamp(42px,7vw,67px);letter-spacing:-.035em}
 h2{font-size:29px}
 p{color:var(--muted);margin:10px 0 0}
 .panel,.tile{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:24px}
-#setup,#unlock{max-width:460px}
+dialog{width:min(440px,calc(100% - 32px));padding:24px;border:1px solid var(--line);border-radius:18px;background:var(--white);color:var(--ink)}
+dialog::backdrop{background:#22372d77}
+th:nth-child(3),td:nth-child(3){text-align:right;white-space:nowrap}
 .totals{display:grid;grid-template-columns:1.3fr repeat(4,1fr);gap:12px;margin-bottom:20px}
 .tile{min-width:0;padding:17px 18px}
 .tile:first-child{background:var(--green);border-color:var(--green);color:white}

@@ -7,8 +7,24 @@ const byId = id => document.getElementById(id);
 const access = byId('access');
 const expense = byId('expense');
 const refresh = byId('refresh');
-const lock = byId('lock');
-let code = '';
+const owner = byId('owner');
+const ownerDialog = byId('owner-dialog');
+const editDialog = byId('edit-dialog');
+const editForm = expense.cloneNode(true);
+editForm.id = 'edit-expense';
+editForm.querySelector('[role="status"]').id = 'edit-status';
+const editSubmit = editForm.querySelector('button');
+editSubmit.textContent = 'Save changes';
+const cancelEdit = document.createElement('button');
+cancelEdit.type = 'button';
+cancelEdit.className = 'quiet';
+cancelEdit.textContent = 'Cancel';
+cancelEdit.addEventListener('click', () => editDialog.close());
+editForm.append(cancelEdit);
+editDialog.append(editForm);
+let ownerPassword = '';
+let selectedId;
+let displayedEntries = [];
 let pending;
 let version = 0;
 
@@ -16,18 +32,19 @@ async function request(payload) {
   const response = await fetch('./api/expenses', {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-    body: JSON.stringify({ ...payload, code }),
+    body: JSON.stringify(payload),
     signal: AbortSignal.timeout(25000),
   });
-  if (!response.ok) throw new Error('The ledger is unreachable.');
   const data = await response.json().catch(() => {
     throw new Error('The ledger returned an unexpected response.');
   });
-  if (!data.ok) throw new Error(data.message);
+  if (!response.ok || !data.ok) throw new Error(data.message || 'The ledger is unreachable.');
   return data.entries;
 }
 
 function render(entries) {
+  displayedEntries = entries;
+  byId('edit-column').hidden = !ownerPassword;
   const totals = Object.fromEntries(people.map(name => [name, 0]));
   let total = 0;
   const body = document.createDocumentFragment();
@@ -48,6 +65,22 @@ function render(entries) {
     }
     row.insertCell().textContent = entry.payer;
     row.insertCell().textContent = currency.format(entry.amount);
+    if (ownerPassword) {
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.className = 'quiet';
+      edit.textContent = 'Edit';
+      edit.setAttribute('aria-label', 'Edit ' + entry.title);
+      edit.addEventListener('click', () => {
+        selectedId = entry.id;
+        for (const name of ['title', 'amount', 'payer', 'description']) {
+          editForm.elements[name].value = entry[name];
+        }
+        byId('edit-status').textContent = '';
+        editDialog.showModal();
+      });
+      row.insertCell().append(edit);
+    }
     body.append(row);
   }
   const tiles = Object.entries({ 'Total expense': total, ...totals }).map(([label, paise]) => {
@@ -77,30 +110,67 @@ async function load() {
   } catch (error) {
     if (current === version) byId('read-status').textContent = 'Refresh failed. ' + error.message;
   } finally {
-    refresh.disabled = false;
+    if (current === version) refresh.disabled = false;
   }
 }
 
+owner.addEventListener('click', () => {
+  if (ownerPassword) {
+    ownerPassword = '';
+    owner.textContent = 'Sachin · Owner';
+    render(displayedEntries);
+    return;
+  }
+  access.reset();
+  byId('access-status').textContent = '';
+  ownerDialog.showModal();
+});
+
+access.querySelector('[data-close]').addEventListener('click', () => ownerDialog.close());
+ownerDialog.addEventListener('close', () => access.reset());
 access.addEventListener('submit', async event => {
   event.preventDefault();
-  const button = access.querySelector('button');
+  const button = access.querySelector('button:last-of-type');
   const status = byId('access-status');
+  const password = access.elements.password.value;
   button.disabled = true;
-  status.textContent = 'Opening the ledger…';
-  code = access.elements.code.value;
+  status.textContent = 'Checking password…';
   try {
-    render(await request({ action: 'list' }));
-    access.reset();
-    status.textContent = '';
-    byId('unlock').hidden = true;
-    byId('dashboard').hidden = false;
-    lock.hidden = false;
+    await request({ action: 'owner', password });
+    if (!ownerDialog.open) return;
+    ownerPassword = password;
+    owner.textContent = 'Exit owner mode';
+    ownerDialog.close();
+    render(displayedEntries);
   } catch (error) {
-    code = '';
     status.textContent = error.message;
   } finally {
     button.disabled = false;
   }
+});
+
+editForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const status = byId('edit-status');
+  editSubmit.disabled = true;
+  cancelEdit.disabled = true;
+  status.textContent = 'Saving changes…';
+  try {
+    const fields = Object.fromEntries(new FormData(editForm));
+    await request({ ...fields, action: 'edit', id: selectedId, password: ownerPassword });
+    editDialog.close();
+    byId('save-status').textContent = 'Expense updated.';
+    await load();
+  } catch (error) {
+    status.textContent = error.message;
+  } finally {
+    editSubmit.disabled = false;
+    cancelEdit.disabled = false;
+  }
+});
+
+editDialog.addEventListener('cancel', event => {
+  if (editSubmit.disabled) event.preventDefault();
 });
 
 expense.addEventListener('submit', async event => {
@@ -111,7 +181,6 @@ expense.addEventListener('submit', async event => {
   const button = expense.querySelector('button');
   const status = byId('save-status');
   button.disabled = true;
-  lock.disabled = true;
   status.textContent = 'Saving…';
   try {
     await request({ ...fields, action: 'append', id: pending.id });
@@ -123,22 +192,8 @@ expense.addEventListener('submit', async event => {
     status.textContent = error.message + ' Retry with the same details if you are unsure whether it saved.';
   } finally {
     button.disabled = false;
-    lock.disabled = false;
   }
 });
 
 refresh.addEventListener('click', load);
-lock.addEventListener('click', () => {
-  ++version;
-  code = '';
-  pending = undefined;
-  expense.reset();
-  render([]);
-  byId('save-status').textContent = '';
-  lock.hidden = true;
-  byId('dashboard').hidden = true;
-  byId('unlock').hidden = false;
-  access.elements.code.focus();
-});
-
-byId('unlock').hidden = false;
+load();

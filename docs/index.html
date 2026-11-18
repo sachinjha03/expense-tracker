@@ -9,14 +9,9 @@
 <script src="app.js" defer></script>
 </head>
 <body>
-<header><div class="bar"><span class="mark" aria-hidden="true">✳</span><strong>Wedding ledger</strong><button id="lock" class="quiet" hidden>Lock tracker</button></div></header>
+<header><div class="bar"><span class="mark" aria-hidden="true">✳</span><strong>Wedding ledger</strong><button id="owner" class="quiet" type="button">Sachin · Owner</button></div></header>
 <main>
 <section class="intro"><h1>Wedding expenses</h1><p>Track shared wedding costs and see what each person has paid.</p></section>
-<section id="unlock" class="panel" hidden>
-<h2>Open the ledger</h2>
-<form id="access"><label>Shared access code<input name="code" type="password" required maxlength="256" autocomplete="current-password"></label><button>Open tracker</button><p id="access-status" role="status"></p></form>
-</section>
-<div id="dashboard" hidden>
 <section class="totals" aria-label="Expense totals" id="totals"></section>
 <div class="columns">
 <section class="panel"><h2>Add an expense</h2>
@@ -29,9 +24,20 @@
 </form></section>
 <section class="panel history"><div class="section-head"><h2>Expense history</h2><button id="refresh" class="quiet">Refresh</button></div>
 <p id="read-status" role="status"></p>
-<div class="table-wrap"><table id="table" hidden><thead><tr><th scope="col">Expense</th><th scope="col">Spent by</th><th scope="col">Amount</th></tr></thead><tbody></tbody></table></div>
+<div class="table-wrap"><table id="table" hidden><thead><tr><th scope="col">Expense</th><th scope="col">Spent by</th><th scope="col">Amount</th><th id="edit-column" scope="col" hidden>Actions</th></tr></thead><tbody></tbody></table></div>
 </section>
-</div></div>
+</div>
+<dialog id="owner-dialog" aria-labelledby="owner-title">
+  <h2 id="owner-title">Sachin · Owner</h2>
+  <form id="access">
+    <label>Owner password<input name="password" type="password" required maxlength="256" autocomplete="current-password"></label>
+    <div class="section-head"><button type="button" class="quiet" data-close>Cancel</button><button>Enable editing</button></div>
+    <p id="access-status" role="status"></p>
+  </form>
+</dialog>
+<dialog id="edit-dialog" aria-labelledby="edit-title">
+  <h2 id="edit-title">Edit expense</h2>
+</dialog>
 </main>
 </body>
 </html>
