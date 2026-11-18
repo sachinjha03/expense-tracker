@@ -13,15 +13,15 @@ let pending;
 let version = 0;
 
 async function request(payload) {
-  const response = await fetch(window.expenseEndpoint, {
+  const response = await fetch('./api/expenses', {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
     body: JSON.stringify({ ...payload, code }),
     signal: AbortSignal.timeout(25000),
   });
-  if (!response.ok) throw new Error('Google Sheets is unreachable.');
+  if (!response.ok) throw new Error('The ledger is unreachable.');
   const data = await response.json().catch(() => {
-    throw new Error('Check the Google Apps Script deployment settings.');
+    throw new Error('The ledger returned an unexpected response.');
   });
   if (!data.ok) throw new Error(data.message);
   return data.entries;
@@ -141,4 +141,4 @@ lock.addEventListener('click', () => {
   access.elements.code.focus();
 });
 
-byId(window.expenseEndpoint ? 'unlock' : 'setup').hidden = false;
+byId('unlock').hidden = false;
