@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A shared wedding expense ledger.">
+<title>Wedding Expense Tracker</title>
+<link rel="stylesheet" href="style.css">
+<script src="config.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<header><div class="bar"><span class="mark" aria-hidden="true">✳</span><strong>Wedding ledger</strong><button id="lock" class="quiet" hidden>Lock tracker</button></div></header>
+<main>
+<section class="intro"><h1>Wedding expenses</h1><p>Track shared wedding costs and see what each person has paid.</p></section>
+<section id="setup" class="panel" hidden><h2>Google Sheets setup pending</h2><p>The tracker is hosted. Its Google Sheets connection needs to be activated by the owner.</p></section>
+<section id="unlock" class="panel" hidden>
+<h2>Open the ledger</h2>
+<form id="access"><label>Shared access code<input name="code" type="password" required maxlength="256" autocomplete="current-password"></label><button>Open tracker</button><p id="access-status" role="status"></p></form>
+</section>
+<div id="dashboard" hidden>
+<section class="totals" aria-label="Expense totals" id="totals"></section>
+<div class="columns">
+<section class="panel"><h2>Add an expense</h2>
+<form id="expense">
+<label>Title<input name="title" required maxlength="120" placeholder="e.g. Flower arrangements"></label>
+<div class="pair"><label>Amount (₹)<input type="number" name="amount" min="0.01" max="999999999.99" step="0.01" required placeholder="0.00"></label>
+<label>Spent by<select name="payer" required><option value="">Select a person</option><option>Sachin</option><option>Vikas</option><option>Manisha</option><option>Basuki</option></select></label></div>
+<label>Description <small>optional</small><textarea name="description" maxlength="500" rows="3" placeholder="Add a note"></textarea></label>
+<button>Add expense</button><p id="save-status" role="status"></p>
+</form></section>
+<section class="panel history"><div class="section-head"><h2>Expense history</h2><button id="refresh" class="quiet">Refresh</button></div>
+<p id="read-status" role="status"></p>
+<div class="table-wrap"><table id="table" hidden><thead><tr><th scope="col">Expense</th><th scope="col">Spent by</th><th scope="col">Amount</th></tr></thead><tbody></tbody></table></div>
+</section>
+</div></div>
+</main>
+</body>
+</html>
