@@ -47,3 +47,11 @@ td:first-child{overflow-wrap:anywhere}
 td small{display:block;white-space:pre-wrap;margin-top:3px}
 @media(max-width:800px){.columns{grid-template-columns:1fr}.totals{grid-template-columns:repeat(2,1fr)}.tile:first-child{grid-column:1/-1}}
 @media(max-width:420px){.bar,main{width:calc(100% - 24px)}.panel{padding:16px}.pair{grid-template-columns:1fr}}
+button.tile{color:var(--ink);font-weight:400;text-align:left}
+button.tile:hover{background:#edf2e9;border-color:#9bb39c}
+#breakdown-dialog{max-height:85vh;overflow:auto}
+.dialog-close{margin:0}
+.breakdown-list{list-style:none;margin:14px 0 0;padding:0}
+.breakdown-list li{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line)}
+.breakdown-list li span{overflow-wrap:anywhere;min-width:0}
+.breakdown-list li strong{white-space:nowrap}

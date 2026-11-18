@@ -42,6 +42,24 @@ async function request(payload) {
   return data.entries;
 }
 
+function showBreakdown(person, entries, paise) {
+  const dialog = byId('breakdown-dialog');
+  byId('breakdown-title').textContent = person + '’s spending';
+  byId('breakdown-total').textContent = 'Total spent: ' + currency.format(paise / 100);
+  const rows = entries.filter(entry => entry.payer.toLowerCase() === person.toLowerCase());
+  byId('breakdown-empty').hidden = rows.length > 0;
+  byId('breakdown-list').replaceChildren(...rows.map(entry => {
+    const row = document.createElement('li');
+    const title = document.createElement('span');
+    const amount = document.createElement('strong');
+    title.textContent = entry.title;
+    amount.textContent = currency.format(entry.amount);
+    row.append(title, amount);
+    return row;
+  }));
+  dialog.showModal();
+}
+
 function render(entries) {
   displayedEntries = entries;
   byId('edit-column').hidden = !ownerPassword;
@@ -84,8 +102,14 @@ function render(entries) {
     body.append(row);
   }
   const tiles = Object.entries({ 'Total expense': total, ...totals }).map(([label, paise]) => {
-    const tile = document.createElement('div');
+    const isPerson = people.includes(label);
+    const tile = document.createElement(isPerson ? 'button' : 'div');
     tile.className = 'tile';
+    if (isPerson) {
+      tile.type = 'button';
+      tile.setAttribute('aria-haspopup', 'dialog');
+      tile.addEventListener('click', () => showBreakdown(label, entries, paise));
+    }
     const name = document.createElement('span');
     const value = document.createElement('strong');
     name.textContent = label;

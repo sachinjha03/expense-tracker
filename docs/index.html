@@ -38,6 +38,15 @@
 <dialog id="edit-dialog" aria-labelledby="edit-title">
   <h2 id="edit-title">Edit expense</h2>
 </dialog>
+<dialog id="breakdown-dialog" aria-labelledby="breakdown-title">
+  <div class="section-head">
+    <h2 id="breakdown-title"></h2>
+    <form method="dialog" class="dialog-close"><button class="quiet">Close</button></form>
+  </div>
+  <p id="breakdown-total"></p>
+  <p id="breakdown-empty" hidden>No expenses yet.</p>
+  <ul id="breakdown-list" class="breakdown-list"></ul>
+</dialog>
 </main>
 </body>
 </html>
